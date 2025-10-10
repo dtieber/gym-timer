@@ -62,20 +62,22 @@ fun GymTimerApp(context: Context) {
         Log.d(TAG, "Reset timer")
     }
 
+    fun startCountdown(): Job = scope.launch {
+        while (remainingTime > 0 && running) {
+            delay(1000L)
+            remainingTime--
+        }
+        if (remainingTime == 0 && running) {
+            alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })
+            running = false
+        }
+    }
+
     fun startTimer(seconds: Int) {
         timerJob?.cancel()
         remainingTime = seconds
         running = true
-        timerJob = scope.launch {
-            while (remainingTime > 0 && running) {
-                delay(1000L)
-                remainingTime--
-            }
-            if (remainingTime == 0 && running) {
-                alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })
-                running = false
-            }
-        }
+        timerJob = startCountdown()
         Log.d(TAG, "Timer started: $seconds")
     }
 
