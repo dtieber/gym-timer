@@ -40,13 +40,14 @@ private const val TAG = "GymTimer"
 
 @Composable
 fun GymTimerApp(context: Context) {
-    val scope = rememberCoroutineScope()
     var remainingTime by remember { mutableIntStateOf(0) }
     var running by remember { mutableStateOf(false) }
-    var timerJob by remember { mutableStateOf<Job?>(null) }
     var alarmRinging by remember { mutableStateOf(false) }
 
     val alarmController = remember { AlarmController() }
+
+    val scope = rememberCoroutineScope()
+    var timerJob by remember { mutableStateOf<Job?>(null) }
 
     fun stopAlarm() {
         alarmController.stop(context)
