@@ -24,19 +24,23 @@ class AlarmController {
 
     fun start(context: Context, scope: CoroutineScope, onShow: () -> Unit, onHide: () -> Unit) {
         vibrate(context)
-        val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val headphoneDevice = findHeadphoneDevice(am)
-        saveAudioState(am)
-        configureAudio(am, headphoneDevice != null)
         onShow()
-        player = createPlayer(context, headphoneDevice)
-        if (player != null) Log.d(TAG, "Alarm started")
+        playSound(context)
         autoStopJob = scope.launch {
             delay(10000L)
             stop(context)
             Log.d(TAG, "Alarm auto stopped")
             onHide()
         }
+    }
+
+    private fun playSound(context: Context) {
+        val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val headphoneDevice = findHeadphoneDevice(am)
+        saveAudioState(am)
+        configureAudio(am, headphoneDevice != null)
+        player = createPlayer(context, headphoneDevice)
+        if (player != null) Log.d(TAG, "Sound started")
     }
 
     fun stop(context: Context) {
