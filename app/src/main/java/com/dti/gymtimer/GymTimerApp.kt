@@ -18,6 +18,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +42,7 @@ private const val TAG = "GymTimer"
 fun GymTimerApp(context: Context) {
     var remainingTime by remember { mutableIntStateOf(0) }
     var running by remember { mutableStateOf(false) }
-    var alarmRinging by remember { mutableStateOf(false) }
+    val alarmRinging by AlarmStateHolder.alarmRinging.collectAsState()
 
     val alarmController = remember { AlarmController() }
 
@@ -53,7 +54,7 @@ fun GymTimerApp(context: Context) {
 
     fun stopAlarm() {
         alarmController.stop(context)
-        alarmRinging = false
+        AlarmStateHolder.setAlarmRinging(false)
         Log.d(TAG, "Alarm stopped")
     }
 
@@ -72,7 +73,7 @@ fun GymTimerApp(context: Context) {
 
     fun onCompleted() {
         alarmController.start(context)
-        alarmRinging = true
+        AlarmStateHolder.setAlarmRinging(true)
         running = false
     }
 

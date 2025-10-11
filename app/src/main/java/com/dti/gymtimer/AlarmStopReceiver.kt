@@ -11,5 +11,7 @@ class AlarmStopReceiver : BroadcastReceiver() {
 
         val alarmController = AlarmController.getInstance()
         alarmController?.stop(context)
+
+        AlarmStateHolder.setAlarmRinging(false)
     }
 }
