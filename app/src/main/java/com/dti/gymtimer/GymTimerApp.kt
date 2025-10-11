@@ -65,6 +65,17 @@ fun GymTimerApp(context: Context) {
         Log.d(TAG, "Reset timer")
     }
 
+    fun onUpdate(event: CountdownEvent.CountdownUpdated) {
+        remainingTime = event.remainingSeconds
+        notificationService.showCountdownNotification(context, remainingTime)
+    }
+
+    fun onCompleted() {
+        alarmController.start(context)
+        alarmRinging = true
+        running = false
+    }
+
     fun startTimer(seconds: Int) {
         timerJob?.cancel()
         remainingTime = seconds
@@ -72,14 +83,8 @@ fun GymTimerApp(context: Context) {
         timerJob = scope.launch {
             countdownService.startCountdown(seconds).collect { event ->
                 when (event) {
-                    is CountdownEvent.CountdownUpdated -> {
-                        remainingTime = event.remainingSeconds
-                        notificationService.showCountdownNotification(context, remainingTime)
-                    }
-                    is CountdownEvent.CountdownCompleted -> {
-                        alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })
-                        running = false
-                    }
+                    is CountdownEvent.CountdownUpdated -> onUpdate(event)
+                    is CountdownEvent.CountdownCompleted -> onCompleted()
                 }
             }
         }
