@@ -49,6 +49,7 @@ fun GymTimerApp(context: Context) {
     var timerJob by remember { mutableStateOf<Job?>(null) }
 
     val countdownService = remember { CountdownService() }
+    val notificationService = remember { NotificationService() }
 
     fun stopAlarm() {
         alarmController.stop(context)
@@ -73,6 +74,7 @@ fun GymTimerApp(context: Context) {
                 when (event) {
                     is CountdownEvent.CountdownUpdated -> {
                         remainingTime = event.remainingSeconds
+                        notificationService.showCountdownNotification(context, remainingTime)
                     }
                     is CountdownEvent.CountdownCompleted -> {
                         alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })

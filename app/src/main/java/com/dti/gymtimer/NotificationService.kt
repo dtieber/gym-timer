@@ -15,6 +15,23 @@ class NotificationService {
         private const val CHANNEL_ID = "gymtimer_alarm_channel"
     }
 
+    fun showCountdownNotification(context: Context, remainingSeconds: Int) {
+        createNotificationChannel(context)
+
+        val formattedTime = formatTime(remainingSeconds)
+
+        val notification = Notification.Builder(context, CHANNEL_ID)
+            .setContentTitle("⏳ Countdown Running")
+            .setContentText("Time left: $formattedTime")
+            .setSmallIcon(R.drawable.ic_notification_timer)
+            .setOngoing(true)
+            .build()
+
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(1, notification)
+        Log.d(TAG, "Countdown notification updated: $formattedTime")
+    }
+
     fun showStopNotification(context: Context) {
         createNotificationChannel(context)
 
