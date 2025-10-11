@@ -1,11 +1,6 @@
 package com.dti.gymtimer
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -21,7 +16,6 @@ private const val TAG = "GymTimer-Alarm"
 
 class AlarmController {
     companion object {
-        private const val CHANNEL_ID = "gymtimer_alarm_channel"
         private var instance: AlarmController? = null
 
         fun getInstance(): AlarmController? = instance
@@ -32,6 +26,8 @@ class AlarmController {
     private var prevSpeaker: Boolean? = null
     private var prevMode: Int? = null
 
+    private var notificationService: NotificationService= NotificationService()
+
     init {
         instance = this
     }
@@ -39,7 +35,7 @@ class AlarmController {
     fun start(context: Context, scope: CoroutineScope, onShow: () -> Unit, onHide: () -> Unit) {
         vibrate(context)
         onShow()
-        showNotification(context)
+        notificationService.showStopNotification(context)
         playSound(context)
         autoStopJob = scope.launch {
             delay(10000L)
@@ -71,7 +67,7 @@ class AlarmController {
         player = null
         autoStopJob?.cancel()
         restoreAudio(context)
-        cancelNotification(context)
+        notificationService.cancelNotification(context)
     }
 
     private fun findHeadphoneDevice(am: AudioManager): AudioDeviceInfo? {
@@ -139,45 +135,5 @@ class AlarmController {
         } catch (e: Exception) {
             Log.e(TAG, "restoreAudio", e)
         }
-    }
-
-    private fun showNotification(context: Context) {
-        createNotificationChannel(context)
-
-        val stopIntent = Intent(context, AlarmStopReceiver::class.java)
-        val stopPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = Notification.Builder(context, CHANNEL_ID)
-            .setContentTitle("⏰ Gym Timer")
-            .setContentText("Alarm ringing – tap to stop")
-            .setSmallIcon(R.drawable.ic_notification_timer)
-            .setAutoCancel(true)
-            .addAction(0, "Stop", stopPendingIntent)
-            .build()
-
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(1, notification)
-        Log.d(TAG, "Notification shown")
-    }
-
-    private fun cancelNotification(context: Context) {
-        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.cancel(1)
-        Log.d(TAG, "Notification canceled")
-    }
-
-    private fun createNotificationChannel(context: Context) {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Gym Timer Alarm",
-            NotificationManager.IMPORTANCE_HIGH
-        )
-        val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(channel)
     }
 }
