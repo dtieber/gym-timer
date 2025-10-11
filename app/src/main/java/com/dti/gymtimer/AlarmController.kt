@@ -11,8 +11,6 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
-import android.os.VibrationEffect
-import android.os.VibratorManager
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -131,19 +129,6 @@ class AlarmController {
             null
         }
     }
-
-    private fun vibrate(context: Context) {
-        try {
-            val vm = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            val vibrator = vm.defaultVibrator
-            val effect = VibrationEffect.createOneShot(2000, 255)
-            vibrator.vibrate(effect)
-            Log.d(TAG, "Vibrating")
-        } catch (e: Exception) {
-            Log.e(TAG, "vibrate", e)
-        }
-    }
-
 
     private fun restoreAudio(context: Context) {
         try {
