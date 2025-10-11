@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import isAppInBackground
 
 private const val TAG = "GymTimer-Notifications"
 
@@ -16,6 +17,7 @@ class NotificationService {
     }
 
     fun showCountdownNotification(context: Context, remainingSeconds: Int) {
+        if (!isAppInBackground()) return
         createNotificationChannel(context)
 
         val formattedTime = formatTime(remainingSeconds)
@@ -33,6 +35,7 @@ class NotificationService {
     }
 
     fun showStopNotification(context: Context) {
+        if (!isAppInBackground()) return
         createNotificationChannel(context)
 
         val stopIntent = Intent(context, AlarmStopReceiver::class.java)
