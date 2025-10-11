@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -49,6 +48,8 @@ fun GymTimerApp(context: Context) {
     val scope = rememberCoroutineScope()
     var timerJob by remember { mutableStateOf<Job?>(null) }
 
+    val countdownService = remember { CountdownService() }
+
     fun stopAlarm() {
         alarmController.stop(context)
         alarmRinging = false
@@ -58,26 +59,28 @@ fun GymTimerApp(context: Context) {
     fun resetTimer() {
         running = false
         timerJob?.cancel()
+        timerJob = null
         remainingTime = 0
         Log.d(TAG, "Reset timer")
-    }
-
-    fun startCountdown(): Job = scope.launch {
-        while (remainingTime > 0 && running) {
-            delay(1000L)
-            remainingTime--
-        }
-        if (remainingTime == 0 && running) {
-            alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })
-            running = false
-        }
     }
 
     fun startTimer(seconds: Int) {
         timerJob?.cancel()
         remainingTime = seconds
         running = true
-        timerJob = startCountdown()
+        timerJob = scope.launch {
+            countdownService.startCountdown(seconds).collect { event ->
+                when (event) {
+                    is CountdownEvent.CountdownUpdated -> {
+                        remainingTime = event.remainingSeconds
+                    }
+                    is CountdownEvent.CountdownCompleted -> {
+                        alarmController.start(context, scope, { alarmRinging = true }, { alarmRinging = false })
+                        running = false
+                    }
+                }
+            }
+        }
         Log.d(TAG, "Timer started: $seconds")
     }
 
