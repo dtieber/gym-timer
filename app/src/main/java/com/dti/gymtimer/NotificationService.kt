@@ -21,21 +21,11 @@ class NotificationService {
 
         val formattedTime = formatTime(remainingSeconds)
 
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setContentTitle("⏳ Countdown Running")
             .setContentText("Time left: $formattedTime")
             .setSmallIcon(R.drawable.ic_notification_timer)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(getNavigateBackToAppIntent(context))
             .setOngoing(true)
             .build()
 
@@ -48,20 +38,12 @@ class NotificationService {
         if (!isAppInBackground()) return
         createNotificationChannel(context)
 
-        val stopIntent = Intent(context, AlarmStopReceiver::class.java)
-        val stopPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setContentTitle("⏰ Gym Timer")
             .setContentText("Alarm ringing – tap to stop")
             .setSmallIcon(R.drawable.ic_notification_timer)
             .setAutoCancel(true)
-            .addAction(0, "Stop", stopPendingIntent)
+            .setContentIntent(getNavigateBackToAppIntent(context))
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -83,5 +65,17 @@ class NotificationService {
         )
         val nm = context.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(channel)
+    }
+
+    private fun getNavigateBackToAppIntent(context: Context): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        return PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 }
