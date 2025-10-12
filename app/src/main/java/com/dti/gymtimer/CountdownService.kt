@@ -6,12 +6,14 @@ import kotlinx.coroutines.flow.flow
 
 class CountdownService {
 
+    private var remainingSeconds = 0
+
     fun startCountdown(initialSeconds: Int): Flow<CountdownEvent> = flow {
-        var remaining = initialSeconds
-        while (remaining >= 0) {
-            emit(CountdownEvent.CountdownUpdated(remaining))
+        remainingSeconds = initialSeconds
+
+        while (remainingSeconds >= 0) {
+            emit(CountdownEvent.CountdownUpdated(remainingSeconds))
             delay(1000L)
-            remaining--
         }
         emit(CountdownEvent.CountdownCompleted)
     }
