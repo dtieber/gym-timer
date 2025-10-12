@@ -30,4 +30,9 @@ class CountdownService {
     fun addSeconds(seconds: Int) {
         remainingSeconds += seconds
     }
+
+    fun resetCountdown() {
+        remainingSeconds = 0
+        isPaused = false
+    }
 }
