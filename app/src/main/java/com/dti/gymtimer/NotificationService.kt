@@ -21,10 +21,21 @@ class NotificationService {
 
         val formattedTime = formatTime(remainingSeconds)
 
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = Notification.Builder(context, CHANNEL_ID)
             .setContentTitle("⏳ Countdown Running")
             .setContentText("Time left: $formattedTime")
             .setSmallIcon(R.drawable.ic_notification_timer)
+            .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()
 
