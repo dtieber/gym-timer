@@ -55,7 +55,7 @@ class NotificationService {
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(1, notification)
-        Log.d(TAG, "Notification shown")
+        Log.d(TAG, "Stop notification shown")
     }
 
     fun cancelNotification(context: Context) {
