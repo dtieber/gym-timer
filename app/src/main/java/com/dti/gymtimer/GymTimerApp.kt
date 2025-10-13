@@ -39,7 +39,7 @@ private const val TAG = "GymTimer"
 @Composable
 fun GymTimerApp(context: Context) {
     var remainingTime by remember { mutableIntStateOf(0) }
-    val alarmRinging by AlarmStateHolder.alarmRinging.collectAsState()
+    var alarmRinging by remember { mutableStateOf(false) }
 
     val gymTimerService = remember { GymTimerService(context) }
 
@@ -47,7 +47,7 @@ fun GymTimerApp(context: Context) {
 
     fun resetTimer() {
         remainingTime = 0
-        AlarmStateHolder.setAlarmRinging(false)
+        alarmRinging = false
         gymTimerService.resetTimer()
         Log.d(TAG, "Reset timer")
     }
@@ -58,7 +58,7 @@ fun GymTimerApp(context: Context) {
 
     fun onCompleted() {
         Log.d(TAG, "Show alarm ringing info in app")
-        AlarmStateHolder.setAlarmRinging(true)
+        alarmRinging = true
     }
 
     fun startTimer(seconds: Int) {
