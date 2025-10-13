@@ -18,7 +18,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -41,66 +39,51 @@ private const val TAG = "GymTimer"
 @Composable
 fun GymTimerApp(context: Context) {
     var remainingTime by remember { mutableIntStateOf(0) }
-    var running by remember { mutableStateOf(false) }
     val alarmRinging by AlarmStateHolder.alarmRinging.collectAsState()
 
-    val alarmController = remember { AlarmController() }
+    val gymTimerService = remember { GymTimerService(context) }
 
     val scope = rememberCoroutineScope()
-    var timerJob by remember { mutableStateOf<Job?>(null) }
-
-    val countdownService = remember { CountdownService() }
-    val notificationService = remember { NotificationService() }
-
-    fun stopAlarm() {
-        alarmController.stop(context)
-        AlarmStateHolder.setAlarmRinging(false)
-        Log.d(TAG, "Alarm stopped")
-    }
 
     fun resetTimer() {
-        running = false
-        timerJob?.cancel()
-        timerJob = null
         remainingTime = 0
+        AlarmStateHolder.setAlarmRinging(false)
+        gymTimerService.resetTimer()
         Log.d(TAG, "Reset timer")
     }
 
     fun onUpdate(event: CountdownEvent.CountdownUpdated) {
         remainingTime = event.remainingSeconds
-        notificationService.showCountdownNotification(context, remainingTime)
     }
 
     fun onCompleted() {
-        alarmController.start(context)
+        Log.d(TAG, "Show alarm ringing info in app")
         AlarmStateHolder.setAlarmRinging(true)
-        running = false
     }
 
     fun startTimer(seconds: Int) {
-        timerJob?.cancel()
-        remainingTime = seconds
-        running = true
-        timerJob = scope.launch {
-            countdownService.startCountdown(seconds).collect { event ->
+        scope.launch {
+            gymTimerService.startTimer(seconds).collect { event ->
                 when (event) {
+                    CountdownEvent.CountdownCompleted -> onCompleted()
                     is CountdownEvent.CountdownUpdated -> onUpdate(event)
-                    is CountdownEvent.CountdownCompleted -> onCompleted()
                 }
             }
         }
         Log.d(TAG, "Timer started: $seconds")
     }
 
-    fun addTenSeconds() {
-        remainingTime += 10
-        Log.d(TAG, "Added 10s to timer")
-        if (!running) startTimer(remainingTime)
+    fun addSeconds(seconds: Int) {
+        if (!gymTimerService.isRunning()) {
+            return startTimer(seconds)
+        }
+        gymTimerService.addTime(seconds)
+        Log.d(TAG, "Added $seconds seconds to timer")
     }
 
     fun toggleTimer() {
-        running = !running
-        Log.d(TAG, "Toggle timer: $running")
+        gymTimerService.pauseTimer()
+        Log.d(TAG, "Pause timer")
     }
 
     Surface(
@@ -122,7 +105,7 @@ fun GymTimerApp(context: Context) {
                         .fillMaxWidth()
                         .height(48.dp)
                         .background(Color(0xFFFFC107))
-                        .clickable { stopAlarm() },
+                        .clickable { resetTimer() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -155,7 +138,7 @@ fun GymTimerApp(context: Context) {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     Button(onClick = { startTimer(120) }) { Text("2:00", fontSize = 20.sp) }
-                    Button(onClick = { addTenSeconds() }) { Text("+10s", fontSize = 20.sp) }
+                    Button(onClick = { addSeconds(10) }) { Text("+10s", fontSize = 20.sp) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     Button(
