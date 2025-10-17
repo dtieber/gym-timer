@@ -1,12 +1,12 @@
 package com.dti.gymtimer
 
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.IBinder
 import android.util.Log
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 
 private const val TAG = "GymTimer-Service"
 
@@ -17,18 +17,31 @@ class GymTimerService(val context: Context) : Service() {
 
     private var _isRunning = false
 
-    fun startTimer(initialSeconds: Int): Flow<CountdownEvent> = flow {
+    fun startTimer(initialSeconds: Int) {
         _isRunning = true
-        countdownService.startCountdown(initialSeconds).collect { event ->
-            when (event) {
-                CountdownEvent.CountdownCompleted -> {
-                    onCompleted()
-                    emit(CountdownEvent.CountdownCompleted)
+        countdownService.startCountdown(context, initialSeconds)
+    }
+
+    fun registerCountdownReceiver() {
+        val filter = IntentFilter().apply {
+            addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
+            addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
+        }
+        context.registerReceiver(countdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        Log.d(TAG, "BroadcastReceiver manually registered")
+    }
+
+    private val countdownReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d(TAG, "Received broadcast: ${intent?.action}")
+            when (intent?.action) {
+                CountdownService.ACTION_COUNTDOWN_UPDATED -> {
+                    val remainingSeconds = intent.getIntExtra("remaining_seconds", 0)
+                    onUpdated(remainingSeconds)
                 }
 
-                is CountdownEvent.CountdownUpdated -> {
-                    onUpdated(event.remainingSeconds)
-                    emit(CountdownEvent.CountdownUpdated(event.remainingSeconds))
+                CountdownService.ACTION_COUNTDOWN_COMPLETED -> {
+                    onCompleted()
                 }
             }
         }

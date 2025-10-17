@@ -1,6 +1,9 @@
 package com.dti.gymtimer
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,11 +21,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import java.util.Locale
 
 private const val TAG = "GymTimer"
@@ -43,8 +46,6 @@ fun GymTimerApp(context: Context) {
 
     val gymTimerService = remember { GymTimerService(context) }
 
-    val scope = rememberCoroutineScope()
-
     fun resetTimer() {
         remainingTime = 0
         alarmRinging = false
@@ -52,8 +53,8 @@ fun GymTimerApp(context: Context) {
         Log.d(TAG, "Reset timer")
     }
 
-    fun onUpdate(event: CountdownEvent.CountdownUpdated) {
-        remainingTime = event.remainingSeconds
+    fun onUpdate(remaining: Int) {
+        remainingTime = remaining
     }
 
     fun onCompleted() {
@@ -62,14 +63,7 @@ fun GymTimerApp(context: Context) {
     }
 
     fun startTimer(seconds: Int) {
-        scope.launch {
-            gymTimerService.startTimer(seconds).collect { event ->
-                when (event) {
-                    CountdownEvent.CountdownCompleted -> onCompleted()
-                    is CountdownEvent.CountdownUpdated -> onUpdate(event)
-                }
-            }
-        }
+        gymTimerService.startTimer(seconds)
         Log.d(TAG, "Timer started: $seconds")
     }
 
@@ -84,6 +78,42 @@ fun GymTimerApp(context: Context) {
     fun toggleTimer() {
         gymTimerService.pauseTimer()
         Log.d(TAG, "Pause timer")
+    }
+
+    LaunchedEffect(Unit) {
+        gymTimerService.registerCountdownReceiver()
+    }
+
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                Log.d(TAG, "Received broadcast: ${intent?.action}")
+                when (intent?.action) {
+                    CountdownService.ACTION_COUNTDOWN_UPDATED -> {
+                        val remaining = intent.getIntExtra("remaining_seconds", 0)
+                        onUpdate(remaining)
+                        Log.d(TAG, "Received update: $remaining")
+                    }
+
+                    CountdownService.ACTION_COUNTDOWN_COMPLETED -> {
+                        onCompleted()
+                        Log.d(TAG, "Received completion event")
+                    }
+                }
+            }
+        }
+
+        val filter = IntentFilter().apply {
+            addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
+            addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
+        }
+
+        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        Log.d(TAG, "BroadcastReceiver registered")
+
+        onDispose {
+            context.unregisterReceiver(receiver)
+        }
     }
 
     Surface(
