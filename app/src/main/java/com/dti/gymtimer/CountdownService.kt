@@ -38,6 +38,7 @@ class CountdownService {
 
     private fun sendBroadcast(context: Context, action: String, remainingSeconds: Int? = null) {
         val intent = Intent(action).apply {
+            setPackage(context.packageName)
             remainingSeconds?.let {
                 putExtra("remaining_seconds", it)
             }

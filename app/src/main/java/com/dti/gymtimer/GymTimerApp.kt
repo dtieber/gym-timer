@@ -22,7 +22,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,12 +43,13 @@ fun GymTimerApp(context: Context) {
     var remainingTime by remember { mutableIntStateOf(0) }
     var alarmRinging by remember { mutableStateOf(false) }
 
-    val gymTimerService = remember { GymTimerService(context) }
-
     fun resetTimer() {
         remainingTime = 0
         alarmRinging = false
-        gymTimerService.resetTimer()
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.RESET
+        }
+        context.startService(intent)
         Log.d(TAG, "Reset timer")
     }
 
@@ -63,25 +63,29 @@ fun GymTimerApp(context: Context) {
     }
 
     fun startTimer(seconds: Int) {
-        gymTimerService.startTimer(seconds)
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.START
+            putExtra("time", seconds)
+        }
+        context.startService(intent)
         Log.d(TAG, "Timer started: $seconds")
     }
 
     fun addSeconds(seconds: Int) {
-        if (!gymTimerService.isRunning()) {
-            return startTimer(seconds)
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.ADD_TIME
+            putExtra("time", seconds)
         }
-        gymTimerService.addTime(seconds)
+        context.startService(intent)
         Log.d(TAG, "Added $seconds seconds to timer")
     }
 
     fun toggleTimer() {
-        gymTimerService.pauseTimer()
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.PAUSE
+        }
+        context.startService(intent)
         Log.d(TAG, "Pause timer")
-    }
-
-    LaunchedEffect(Unit) {
-        gymTimerService.registerCountdownReceiver()
     }
 
     DisposableEffect(Unit) {

@@ -10,25 +10,54 @@ import android.util.Log
 
 private const val TAG = "GymTimer-Service"
 
-class GymTimerService(val context: Context) : Service() {
+class GymTimerService() : Service() {
+    companion object TimerCommands {
+        const val START = "START"
+        const val PAUSE = "PAUSE"
+        const val RESET = "RESET"
+        const val ADD_TIME = "ADD_TIME"
+    }
+
     val alarmController = AlarmController()
     val countdownService = CountdownService()
     val notificationService = NotificationService()
 
     private var _isRunning = false
 
-    fun startTimer(initialSeconds: Int) {
-        _isRunning = true
-        countdownService.startCountdown(context, initialSeconds)
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "Received intent: ${intent?.action}")
+        when (intent?.action) {
+            START -> {
+                val seconds = intent.getIntExtra("time", 0)
+                startTimer(seconds)
+            }
+            PAUSE -> pauseTimer()
+            RESET -> resetTimer()
+            ADD_TIME -> {
+                val seconds = intent.getIntExtra("time", 0)
+                addTime(seconds)
+            }
+        }
+        return START_STICKY
     }
 
-    fun registerCountdownReceiver() {
+    override fun onCreate() {
+        super.onCreate()
+        registerCountdownReceiver()
+    }
+
+    private fun startTimer(initialSeconds: Int) {
+        _isRunning = true
+        countdownService.startCountdown(this, initialSeconds)
+    }
+
+    private fun registerCountdownReceiver() {
         val filter = IntentFilter().apply {
             addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
             addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
         }
-        context.registerReceiver(countdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        Log.d(TAG, "BroadcastReceiver manually registered")
+        this.registerReceiver(countdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        Log.d(TAG, "BroadcastReceiver registered")
     }
 
     private val countdownReceiver = object : BroadcastReceiver() {
@@ -50,21 +79,21 @@ class GymTimerService(val context: Context) : Service() {
     private fun onCompleted() {
         Log.d(TAG, "Countdown completed")
         this._isRunning = false
-        notificationService.showStopNotification(context)
-        alarmController.start(context)
+        notificationService.showStopNotification(this)
+        alarmController.start(this)
     }
 
     private fun onUpdated(remainingSeconds: Int) {
         Log.d(TAG, "Countdown updated: $remainingSeconds")
-        notificationService.showCountdownNotification(context, remainingSeconds)
+        notificationService.showCountdownNotification(this, remainingSeconds)
     }
 
-    fun addTime(increase: Int) {
+    private fun addTime(increase: Int) {
         countdownService.addSeconds(increase)
         Log.d(TAG, "Added $increase seconds to countdown")
     }
 
-    fun pauseTimer() {
+    private fun pauseTimer() {
         countdownService.togglePause()
         this._isRunning = !this._isRunning
         if (this._isRunning) {
@@ -74,14 +103,10 @@ class GymTimerService(val context: Context) : Service() {
         }
     }
 
-    fun resetTimer() {
+    private fun resetTimer() {
         countdownService.resetCountdown()
-        notificationService.cancelNotification(context)
-        alarmController.stop(context)
-    }
-
-    fun isRunning(): Boolean {
-        return this._isRunning
+        notificationService.cancelNotification(this)
+        alarmController.stop(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
