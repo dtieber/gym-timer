@@ -25,7 +25,6 @@ class NotificationService {
     }
 
     fun showCountdownNotification(context: Context, remainingSeconds: Int) {
-        if (!isAppInBackground()) return
         createNotificationChannel(context)
 
         val formattedTime = formatTime(remainingSeconds)
@@ -44,7 +43,6 @@ class NotificationService {
     }
 
     fun showStopNotification(context: Context) {
-        if (!isAppInBackground()) return
         createNotificationChannel(context)
 
         val notification = Notification.Builder(context, CHANNEL_ID)
