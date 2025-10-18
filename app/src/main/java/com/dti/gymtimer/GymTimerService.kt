@@ -60,7 +60,7 @@ class GymTimerService() : Service() {
             addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
             addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
         }
-        this.registerReceiver(countdownReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        this.registerReceiver(countdownReceiver, filter, RECEIVER_NOT_EXPORTED)
         Log.d(TAG, "BroadcastReceiver registered")
     }
 
