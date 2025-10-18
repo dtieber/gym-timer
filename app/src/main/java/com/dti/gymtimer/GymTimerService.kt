@@ -25,12 +25,16 @@ class GymTimerService() : Service() {
     private var _isRunning = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val notification = notificationService.createForegroundNotification(this)
+        startForeground(1, notification)
+
         Log.d(TAG, "Received intent: ${intent?.action}")
         when (intent?.action) {
             START -> {
                 val seconds = intent.getIntExtra("time", 0)
                 startTimer(seconds)
             }
+
             PAUSE -> pauseTimer()
             RESET -> resetTimer()
             ADD_TIME -> {
@@ -107,6 +111,7 @@ class GymTimerService() : Service() {
         countdownService.resetCountdown()
         notificationService.cancelNotification(this)
         alarmController.stop(this)
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

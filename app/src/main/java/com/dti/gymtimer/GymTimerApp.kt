@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import java.util.Locale
 
 private const val TAG = "GymTimer"
@@ -67,7 +68,7 @@ fun GymTimerApp(context: Context) {
             action = GymTimerService.TimerCommands.START
             putExtra("time", seconds)
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
         Log.d(TAG, "Timer started: $seconds")
     }
 

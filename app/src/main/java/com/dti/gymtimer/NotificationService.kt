@@ -15,6 +15,15 @@ class NotificationService {
         private const val CHANNEL_ID = "gymtimer_alarm_channel"
     }
 
+    fun createForegroundNotification(context: Context): Notification {
+        val builder = Notification.Builder(context, CHANNEL_ID)
+            .setContentTitle("Gym Timer")
+            .setContentText("Timer is running")
+            .setSmallIcon(R.drawable.ic_notification_timer)
+
+        return builder.build()
+    }
+
     fun showCountdownNotification(context: Context, remainingSeconds: Int) {
         if (!isAppInBackground()) return
         createNotificationChannel(context)
