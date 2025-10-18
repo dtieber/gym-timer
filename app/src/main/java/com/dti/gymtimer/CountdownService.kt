@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -19,9 +20,10 @@ class CountdownService {
 
     private var isPaused = false
     private var remainingSeconds = 0
+    private var countdownJob: Job? = null
 
     fun startCountdown(context: Context, initialSeconds: Int) {
-        CoroutineScope(Dispatchers.Default).launch {
+        countdownJob = CoroutineScope(Dispatchers.Default).launch {
             remainingSeconds = initialSeconds
             isPaused = false
 
@@ -56,6 +58,8 @@ class CountdownService {
     }
 
     fun resetCountdown() {
+        countdownJob?.cancel()
+        countdownJob = null
         remainingSeconds = 0
         isPaused = false
     }
