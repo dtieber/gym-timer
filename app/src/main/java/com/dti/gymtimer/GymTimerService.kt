@@ -93,7 +93,7 @@ class GymTimerService() : Service() {
     }
 
     private fun addTime(increase: Int) {
-        countdownService.addSeconds(increase)
+        countdownService.addSeconds(this, increase)
         Log.d(TAG, "Added $increase seconds to countdown")
     }
 

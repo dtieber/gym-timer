@@ -53,7 +53,11 @@ class CountdownService {
         isPaused = !isPaused
     }
 
-    fun addSeconds(seconds: Int) {
+    fun addSeconds(context: Context, seconds: Int) {
+        if (countdownJob == null) {
+            startCountdown(context, seconds)
+            return
+        }
         remainingSeconds += seconds
     }
 
