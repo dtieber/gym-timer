@@ -12,11 +12,14 @@ private const val TAG = "GymTimer-Notifications"
 
 class NotificationService {
     companion object {
-        private const val CHANNEL_ID = "gymtimer_alarm_channel"
+        private const val CHANNEL_ID_ACTIVE = "gymtimer_active_channel"
+        private const val CHANNEL_ID_PASSIVE = "gymtimer_passive_channel"
     }
 
     fun createForegroundNotification(context: Context): Notification {
-        val builder = Notification.Builder(context, CHANNEL_ID)
+        createNotificationChannels(context)
+
+        val builder = Notification.Builder(context, CHANNEL_ID_PASSIVE)
             .setContentTitle("Gym Timer")
             .setContentText("Timer is running")
             .setSmallIcon(R.drawable.ic_notification_timer)
@@ -25,11 +28,11 @@ class NotificationService {
     }
 
     fun showCountdownNotification(context: Context, remainingSeconds: Int) {
-        createNotificationChannel(context)
+        createNotificationChannels(context)
 
         val formattedTime = formatTime(remainingSeconds)
 
-        val notification = Notification.Builder(context, CHANNEL_ID)
+        val notification = Notification.Builder(context, CHANNEL_ID_PASSIVE)
             .setContentTitle("⏳ Countdown Running")
             .setContentText("Time left: $formattedTime")
             .setSmallIcon(R.drawable.ic_notification_timer)
@@ -43,9 +46,9 @@ class NotificationService {
     }
 
     fun showStopNotification(context: Context) {
-        createNotificationChannel(context)
+        createNotificationChannels(context)
 
-        val notification = Notification.Builder(context, CHANNEL_ID)
+        val notification = Notification.Builder(context, CHANNEL_ID_ACTIVE)
             .setContentTitle("⏰ Gym Timer")
             .setContentText("Alarm ringing – tap to stop")
             .setSmallIcon(R.drawable.ic_notification_timer)
@@ -64,14 +67,24 @@ class NotificationService {
         Log.d(TAG, "Notification canceled")
     }
 
-    private fun createNotificationChannel(context: Context) {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Gym Timer Alarm",
+    private fun createNotificationChannels(context: Context) {
+        val alertChannel = NotificationChannel(
+            CHANNEL_ID_ACTIVE,
+            "Gym Timer Alerts",
             NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            enableVibration(true)
+        }
+
+        val passiveChannel = NotificationChannel(
+            CHANNEL_ID_PASSIVE,
+            "Gym Timer Passive",
+            NotificationManager.IMPORTANCE_LOW
         )
+
         val nm = context.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(channel)
+        nm.createNotificationChannel(alertChannel)
+        nm.createNotificationChannel(passiveChannel)
     }
 
     private fun getNavigateBackToAppIntent(context: Context): PendingIntent {
