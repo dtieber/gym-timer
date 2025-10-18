@@ -8,8 +8,6 @@ private const val TAG = "GymTimer-Alarm"
 class AlarmController {
     companion object {
         private var instance: AlarmController? = null
-
-        fun getInstance(): AlarmController? = instance
     }
 
     private var notificationService: NotificationService = NotificationService()
