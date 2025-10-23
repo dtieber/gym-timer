@@ -86,14 +86,14 @@ class SoundService {
                 setDataSource(context, uri)
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
                 prepare()
                 headphoneDevice?.let {
-                    setPreferredDevice(it)
-                    Log.d(TAG, "Routing alarm to ${it.productName}")
+                    val ok = setPreferredDevice(it)
+                    Log.d(TAG, "Routing alarm to ${it.productName}, success=$ok")
                 }
                 start()
             }
