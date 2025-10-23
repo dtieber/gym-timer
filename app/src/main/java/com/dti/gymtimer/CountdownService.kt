@@ -23,6 +23,9 @@ class CountdownService {
     private var countdownJob: Job? = null
 
     fun startCountdown(context: Context, initialSeconds: Int) {
+        if (countdownJob != null) {
+            resetCountdown()
+        }
         countdownJob = CoroutineScope(Dispatchers.Default).launch {
             remainingSeconds = initialSeconds
             isPaused = false
