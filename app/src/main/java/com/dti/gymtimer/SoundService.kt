@@ -5,7 +5,6 @@ import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.util.Log
 
 private const val TAG = "GymTimer-SoundService"
@@ -79,11 +78,11 @@ class SoundService {
     }
 
     private fun createPlayer(context: Context, headphoneDevice: AudioDeviceInfo?): MediaPlayer? {
-        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         return try {
+            val afd = context.resources.openRawResourceFd(R.raw.alarm)
             MediaPlayer().apply {
-                setDataSource(context, uri)
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
