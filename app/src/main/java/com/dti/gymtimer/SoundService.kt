@@ -56,7 +56,8 @@ class SoundService {
 
     private fun saveAudioState(am: AudioManager) {
         prevSpeaker = try {
-            am.isSpeakerphoneOn
+            val outputDevices = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            outputDevices.any { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
         } catch (_: Exception) {
             null
         }
@@ -70,8 +71,17 @@ class SoundService {
     private fun configureAudio(am: AudioManager, hasHeadphones: Boolean) {
         try {
             am.mode = AudioManager.MODE_NORMAL
-            am.isSpeakerphoneOn = !hasHeadphones
-            Log.d(TAG, "Speaker active=${!hasHeadphones}")
+            val target = am.availableCommunicationDevices.find {
+                if (hasHeadphones) it.type != AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+                else it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+            }
+            target?.let {
+                am.setCommunicationDevice(it)
+                Log.d(
+                    TAG,
+                    "Selected device: ${it.productName} (type=${it.type}), Speaker active=${it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER}"
+                )
+            }
         } catch (e: Exception) {
             Log.e(TAG, "configureAudio", e)
         }
@@ -105,7 +115,13 @@ class SoundService {
     private fun restoreAudio(context: Context) {
         try {
             val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            prevSpeaker?.let { am.isSpeakerphoneOn = it }
+            prevSpeaker?.let {
+                val target = am.availableCommunicationDevices.find { device ->
+                    (it && device.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) ||
+                            (!it && device.type != AudioDeviceInfo.TYPE_BUILTIN_SPEAKER)
+                }
+                target?.let { am.setCommunicationDevice(it) }
+            }
             prevMode?.let { am.mode = it }
             Log.d(TAG, "Audio restored")
         } catch (e: Exception) {
