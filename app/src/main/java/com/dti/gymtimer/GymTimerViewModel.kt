@@ -27,6 +27,9 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
     private val _currentSet = MutableStateFlow<Int?>(null)
     val currentSet: StateFlow<Int?> = _currentSet
 
+    private val _workoutStartTimeMs = MutableStateFlow<Long?>(null)
+    val workoutStartTimeMs: StateFlow<Long?> = _workoutStartTimeMs
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d(TAG, "Received broadcast: ${intent?.action}")
@@ -113,5 +116,15 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
             Log.d(TAG, "Advancing set from $it to $next")
             _currentSet.value = next
         }
+    }
+
+    fun setWorkoutStartTimeToNow() {
+        _workoutStartTimeMs.value = System.currentTimeMillis()
+        Log.d(TAG, "Workout start time set to now: ${_workoutStartTimeMs.value}")
+    }
+
+    fun resetWorkoutStartTime() {
+        _workoutStartTimeMs.value = null
+        Log.d(TAG, "Workout start time reset")
     }
 }
