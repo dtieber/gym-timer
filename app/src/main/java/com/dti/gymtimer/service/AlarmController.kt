@@ -1,7 +1,10 @@
-package com.dti.gymtimer
+package com.dti.gymtimer.service
 
 import android.content.Context
 import android.util.Log
+import com.dti.gymtimer.service.notification.NotificationService
+import com.dti.gymtimer.service.sound.SoundService
+import com.dti.gymtimer.service.vibration.vibrate
 
 private const val TAG = "GymTimer-Alarm"
 

@@ -1,4 +1,4 @@
-package com.dti.gymtimer
+package com.dti.gymtimer.service.notification
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,6 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.dti.gymtimer.MainActivity
+import com.dti.gymtimer.R
+import com.dti.gymtimer.formatTime
 
 private const val TAG = "GymTimer-Notifications"
 

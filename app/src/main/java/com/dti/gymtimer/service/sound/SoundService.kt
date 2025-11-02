@@ -1,4 +1,4 @@
-package com.dti.gymtimer
+package com.dti.gymtimer.service.sound
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -6,6 +6,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
+import com.dti.gymtimer.R
 
 private const val TAG = "GymTimer-SoundService"
 

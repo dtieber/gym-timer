@@ -1,4 +1,4 @@
-package com.dti.gymtimer
+package com.dti.gymtimer.service.vibration
 
 import android.content.Context
 import android.os.VibrationEffect

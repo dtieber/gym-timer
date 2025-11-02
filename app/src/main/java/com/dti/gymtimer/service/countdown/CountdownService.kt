@@ -1,4 +1,4 @@
-package com.dti.gymtimer
+package com.dti.gymtimer.service.countdown
 
 import android.content.Context
 import android.content.Intent

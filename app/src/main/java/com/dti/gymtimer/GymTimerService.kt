@@ -7,6 +7,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.IBinder
 import android.util.Log
+import com.dti.gymtimer.service.AlarmController
+import com.dti.gymtimer.service.countdown.CountdownService
+import com.dti.gymtimer.service.notification.NotificationService
 
 private const val TAG = "GymTimer-Service"
 
