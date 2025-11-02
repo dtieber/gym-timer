@@ -98,7 +98,7 @@ fun GymTimerApp(viewModel: GymTimerViewModel) {
             }
 
             Text(
-                text = formatTime(remainingTime),
+                text = formatTimeMS(remainingTime),
                 fontSize = 72.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -154,7 +154,7 @@ fun GymTimerApp(viewModel: GymTimerViewModel) {
 }
 
 
-fun formatTime(seconds: Int): String {
+fun formatTimeMS(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
     return String.format(Locale.ENGLISH, "%02d:%02d", m, s)

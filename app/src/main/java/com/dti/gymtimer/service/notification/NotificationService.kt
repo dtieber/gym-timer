@@ -11,7 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.dti.gymtimer.GymTimerService
 import com.dti.gymtimer.MainActivity
 import com.dti.gymtimer.R
-import com.dti.gymtimer.formatTime
+import com.dti.gymtimer.formatTimeMS
 
 private const val TAG = "GymTimer-Notifications"
 
@@ -35,7 +35,7 @@ class NotificationService {
     fun showCountdownNotification(context: Context, remainingSeconds: Int) {
         createNotificationChannels(context)
 
-        val formattedTime = formatTime(remainingSeconds)
+        val formattedTime = formatTimeMS(remainingSeconds)
 
         val notification = Notification.Builder(context, CHANNEL_ID_PASSIVE)
             .setContentTitle("⏳ Countdown Running")
