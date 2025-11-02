@@ -7,11 +7,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,11 +29,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.dti.gymtimer.ui.theme.AppDanger
+import com.dti.gymtimer.ui.theme.AppDisabledContainer
+import com.dti.gymtimer.ui.theme.AppDisabledContent
+import com.dti.gymtimer.ui.theme.AppMuted
+import com.dti.gymtimer.ui.theme.AppOnSurface
+import com.dti.gymtimer.ui.theme.AppPrimary
+import com.dti.gymtimer.ui.theme.AppSuccess
+import com.dti.gymtimer.ui.theme.AppSuccessContainer
+import com.dti.gymtimer.ui.theme.AppSurface
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,193 +59,228 @@ fun GymTimerApp(viewModel: GymTimerViewModel) {
     val showStopConfirm = remember { mutableStateOf(false) }
 
     Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF101010)),
-        color = Color(0xFF101010)
+        modifier = Modifier.fillMaxSize(),
+        color = AppSurface
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
-            verticalArrangement = Arrangement.Center,
+                .systemBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 56.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (alarmRinging) {
+            // Top area: set chips
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    (1..5).forEach { set ->
+                        val isCurrent = currentSet == set
+                        val isNext = currentSet != null && (currentSet!! % 5 + 1) == set
+
+                        val bgColor = when {
+                            isCurrent -> AppSuccess
+                            isNext -> AppSuccessContainer
+                            else -> Color.DarkGray
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .size(width = 56.dp, height = 56.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(bgColor)
+                                .clickable { viewModel.selectSet(set) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$set",
+                                color = AppOnSurface,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Middle area: timer, alarm banner directly under timer, and quick controls
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(0xFFFFC107))
-                        .clickable { viewModel.resetTimer() },
+                        .clickable { viewModel.toggleTimer() }
+                        .padding(bottom = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "⏰ Alarm ringing – tap to stop",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold
+                        text = formatTimeMS(remainingTime),
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AppOnSurface,
+                        textAlign = TextAlign.Center
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                (1..5).forEach { set ->
-                    val isCurrent = currentSet == set
-                    val isNext = currentSet != null && (currentSet!! % 5 + 1) == set
-
-                    val bgColor = when {
-                        isCurrent -> Color(0xFF4CAF50)
-                        isNext -> Color(0xFF81C784)
-                        else -> Color.DarkGray
-                    }
-
+                if (alarmRinging) {
                     Box(
                         modifier = Modifier
-                            .background(bgColor)
-                            .clickable { viewModel.selectSet(set) }
-                            .padding(12.dp),
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(color = Color(0xFFFFC107))
+                            .zIndex(1f)
+                            .clickable { viewModel.resetTimer() },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "$set",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            "⏰ Alarm ringing — tap to stop",
+                            color = Color.Black,
+                            fontWeight = FontWeight.Bold
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                } else {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Text(
+                    text = if (remainingTime > 0) "Tap to pause/resume" else "Tap to start",
+                    fontSize = 12.sp,
+                    color = AppMuted
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SmallTimerButton("1:00") { viewModel.startTimer(60) }
+                        SmallTimerButton("1:30") { viewModel.startTimer(90) }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SmallTimerButton("2:00") { viewModel.startTimer(120) }
+                        SmallTimerButton("+10s") { viewModel.addSeconds(10) }
+                    }
+                    Row {
+                        Button(
+                            onClick = { viewModel.resetTimer() },
+                            colors = ButtonDefaults.buttonColors(containerColor = AppDanger)
+                        ) {
+                            Text("Reset", color = AppOnSurface)
+                        }
                     }
                 }
             }
 
-            Text(
-                text = formatTimeMS(remainingTime),
-                fontSize = 72.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .clickable { viewModel.toggleTimer() }
-                    .padding(bottom = 40.dp)
-            )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Button(onClick = { viewModel.startTimer(60) }) {
-                        Text(
-                            "1:00",
-                            fontSize = 20.sp
-                        )
-                    }
-                    Button(onClick = { viewModel.startTimer(90) }) {
-                        Text(
-                            "1:30",
-                            fontSize = 20.sp
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Button(onClick = { viewModel.startTimer(120) }) {
-                        Text(
-                            "2:00",
-                            fontSize = 20.sp
-                        )
-                    }
-                    Button(onClick = { viewModel.addSeconds(10) }) {
-                        Text(
-                            "+10s",
-                            fontSize = 20.sp
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Button(
-                        onClick = { viewModel.resetTimer() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-                    ) {
-                        Text("Reset", fontSize = 20.sp, color = Color.White)
-                    }
-                }
-            }
-
+            // Bottom area: workout start + start/stop buttons side-by-side
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 96.dp),
+                    .padding(top = 8.dp, bottom = 36.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = formatClockTime(workoutStartMs),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp)
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Workout start",
+                        fontSize = 12.sp,
+                        color = AppMuted
+                    )
+                    Text(
+                        text = formatClockTime(workoutStartMs),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = AppOnSurface
+                    )
+                }
 
-                val buttonWidth = 96.dp
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Spacer(modifier = Modifier.width(12.dp))
+
+                val isSet = workoutStartMs != null
+                val btnWidth = 96.dp
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        enabled = workoutStartMs == null,
                         onClick = { viewModel.setWorkoutStartTimeToNow() },
-                        modifier = Modifier.width(buttonWidth),
+                        enabled = !isSet,
+                        modifier = Modifier.width(btnWidth),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White
+                            containerColor = if (!isSet) AppPrimary else AppDisabledContainer,
+                            contentColor = if (!isSet) AppOnSurface else AppDisabledContent
                         )
                     ) {
-                        Text("Start", color = Color.Black)
+                        Text("Start")
                     }
 
                     Button(
-                        enabled = workoutStartMs != null,
                         onClick = { showStopConfirm.value = true },
-                        modifier = Modifier.width(buttonWidth),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                        enabled = isSet,
+                        modifier = Modifier.width(btnWidth),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isSet) AppDanger else AppDisabledContainer,
+                            contentColor = if (isSet) AppOnSurface else AppDisabledContent
+                        )
                     ) {
-                        Text("Stop", color = Color.Black)
+                        Text("Stop")
                     }
                 }
             }
+        }
 
-            if (showStopConfirm.value) {
-                AlertDialog(
-                    onDismissRequest = { showStopConfirm.value = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            viewModel.resetWorkoutStartTime()
-                            showStopConfirm.value = false
-                        }) {
-                            Text("Yes", color = Color.White)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showStopConfirm.value = false }) {
-                            Text("No", color = Color.White)
-                        }
-                    },
-                    title = { Text("Stop workout?", color = Color.White) },
-                    text = {
-                        Text(
-                            "Are you sure you want to stop and reset the workout start time?",
-                            color = Color.White
-                        )
-                    },
-                    containerColor = Color(0xFF212121),
-                    tonalElevation = 4.dp
-                )
-            }
+        if (showStopConfirm.value) {
+            AlertDialog(
+                onDismissRequest = { showStopConfirm.value = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.resetWorkoutStartTime()
+                        showStopConfirm.value = false
+                    }) {
+                        Text("Yes", color = AppOnSurface)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showStopConfirm.value = false }) {
+                        Text("No", color = AppMuted)
+                    }
+                },
+                title = { Text("Stop workout?", color = AppOnSurface) },
+                text = {
+                    Text(
+                        "Are you sure you want to stop and reset the workout start time?",
+                        color = AppMuted
+                    )
+                },
+                containerColor = Color(0xFF212121),
+                tonalElevation = 4.dp
+            )
         }
     }
 }
 
+@Composable
+private fun SmallTimerButton(label: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .height(44.dp)
+            .defaultMinSize(minWidth = 100.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = AppPrimary)
+    ) {
+        Text(label, color = AppOnSurface)
+    }
+}
 
 fun formatTimeMS(seconds: Int): String {
     val m = seconds / 60
