@@ -1,0 +1,94 @@
+package com.dti.gymtimer
+
+import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.AndroidViewModel
+import com.dti.gymtimer.service.countdown.CountdownService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+
+private const val TAG = "GymTimerViewModel"
+
+class GymTimerViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val context = application.applicationContext
+
+    private val _remainingTime = MutableStateFlow(0)
+    val remainingTime: StateFlow<Int> = _remainingTime
+
+    private val _alarmRinging = MutableStateFlow(false)
+    val alarmRinging: StateFlow<Boolean> = _alarmRinging
+
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d(TAG, "Received broadcast: ${intent?.action}")
+            when (intent?.action) {
+                CountdownService.ACTION_COUNTDOWN_UPDATED -> {
+                    val remaining = intent.getIntExtra("remaining_seconds", 0)
+                    _remainingTime.value = remaining
+                    Log.d(TAG, "Received update: $remaining")
+                }
+
+                CountdownService.ACTION_COUNTDOWN_COMPLETED -> {
+                    _alarmRinging.value = true
+                    Log.d(TAG, "Received completion event")
+                }
+            }
+        }
+    }
+
+    init {
+        val filter = IntentFilter().apply {
+            addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
+            addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
+        }
+        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        Log.d(TAG, "BroadcastReceiver registered")
+    }
+
+    override fun onCleared() {
+        context.unregisterReceiver(receiver)
+        super.onCleared()
+    }
+
+    fun startTimer(seconds: Int) {
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.START
+            putExtra("time", seconds)
+        }
+        ContextCompat.startForegroundService(context, intent)
+        Log.d(TAG, "Timer started: $seconds")
+    }
+
+    fun addSeconds(seconds: Int) {
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.ADD_TIME
+            putExtra("time", seconds)
+        }
+        context.startService(intent)
+        Log.d(TAG, "Added $seconds seconds to timer")
+    }
+
+    fun toggleTimer() {
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.PAUSE
+        }
+        context.startService(intent)
+        Log.d(TAG, "Pause timer")
+    }
+
+    fun resetTimer() {
+        _remainingTime.value = 0
+        _alarmRinging.value = false
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.TimerCommands.RESET
+        }
+        context.startService(intent)
+        Log.d(TAG, "Reset timer")
+    }
+}

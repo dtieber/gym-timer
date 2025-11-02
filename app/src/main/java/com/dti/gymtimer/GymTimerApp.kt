@@ -1,10 +1,5 @@
 package com.dti.gymtimer
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,12 +16,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,93 +25,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import com.dti.gymtimer.service.countdown.CountdownService
 import java.util.Locale
 
-private const val TAG = "GymTimer"
-
 @Composable
-fun GymTimerApp(context: Context) {
-    var remainingTime by remember { mutableIntStateOf(0) }
-    var alarmRinging by remember { mutableStateOf(false) }
-
-    fun resetTimer() {
-        remainingTime = 0
-        alarmRinging = false
-        val intent = Intent(context, GymTimerService::class.java).apply {
-            action = GymTimerService.TimerCommands.RESET
-        }
-        context.startService(intent)
-        Log.d(TAG, "Reset timer")
-    }
-
-    fun onUpdate(remaining: Int) {
-        remainingTime = remaining
-    }
-
-    fun onCompleted() {
-        Log.d(TAG, "Show alarm ringing info in app")
-        alarmRinging = true
-    }
-
-    fun startTimer(seconds: Int) {
-        val intent = Intent(context, GymTimerService::class.java).apply {
-            action = GymTimerService.TimerCommands.START
-            putExtra("time", seconds)
-        }
-        ContextCompat.startForegroundService(context, intent)
-        Log.d(TAG, "Timer started: $seconds")
-    }
-
-    fun addSeconds(seconds: Int) {
-        val intent = Intent(context, GymTimerService::class.java).apply {
-            action = GymTimerService.TimerCommands.ADD_TIME
-            putExtra("time", seconds)
-        }
-        context.startService(intent)
-        Log.d(TAG, "Added $seconds seconds to timer")
-    }
-
-    fun toggleTimer() {
-        val intent = Intent(context, GymTimerService::class.java).apply {
-            action = GymTimerService.TimerCommands.PAUSE
-        }
-        context.startService(intent)
-        Log.d(TAG, "Pause timer")
-    }
-
-    DisposableEffect(Unit) {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                Log.d(TAG, "Received broadcast: ${intent?.action}")
-                when (intent?.action) {
-                    CountdownService.ACTION_COUNTDOWN_UPDATED -> {
-                        val remaining = intent.getIntExtra("remaining_seconds", 0)
-                        onUpdate(remaining)
-                        Log.d(TAG, "Received update: $remaining")
-                    }
-
-                    CountdownService.ACTION_COUNTDOWN_COMPLETED -> {
-                        onCompleted()
-                        Log.d(TAG, "Received completion event")
-                    }
-                }
-            }
-        }
-
-        val filter = IntentFilter().apply {
-            addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
-            addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
-        }
-
-        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        Log.d(TAG, "BroadcastReceiver registered")
-
-        onDispose {
-            context.unregisterReceiver(receiver)
-        }
-    }
+fun GymTimerApp(viewModel: GymTimerViewModel) {
+    val remainingTime by viewModel.remainingTime.collectAsState()
+    val alarmRinging by viewModel.alarmRinging.collectAsState()
 
     Surface(
         modifier = Modifier
@@ -141,7 +51,7 @@ fun GymTimerApp(context: Context) {
                         .fillMaxWidth()
                         .height(48.dp)
                         .background(Color(0xFFFFC107))
-                        .clickable { resetTimer() },
+                        .clickable { viewModel.resetTimer() },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -160,7 +70,7 @@ fun GymTimerApp(context: Context) {
                 color = Color.White,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .clickable { toggleTimer() }
+                    .clickable { viewModel.toggleTimer() }
                     .padding(bottom = 40.dp)
             )
 
@@ -169,16 +79,36 @@ fun GymTimerApp(context: Context) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Button(onClick = { startTimer(60) }) { Text("1:00", fontSize = 20.sp) }
-                    Button(onClick = { startTimer(90) }) { Text("1:30", fontSize = 20.sp) }
+                    Button(onClick = { viewModel.startTimer(60) }) {
+                        Text(
+                            "1:00",
+                            fontSize = 20.sp
+                        )
+                    }
+                    Button(onClick = { viewModel.startTimer(90) }) {
+                        Text(
+                            "1:30",
+                            fontSize = 20.sp
+                        )
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Button(onClick = { startTimer(120) }) { Text("2:00", fontSize = 20.sp) }
-                    Button(onClick = { addSeconds(10) }) { Text("+10s", fontSize = 20.sp) }
+                    Button(onClick = { viewModel.startTimer(120) }) {
+                        Text(
+                            "2:00",
+                            fontSize = 20.sp
+                        )
+                    }
+                    Button(onClick = { viewModel.addSeconds(10) }) {
+                        Text(
+                            "+10s",
+                            fontSize = 20.sp
+                        )
+                    }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     Button(
-                        onClick = { resetTimer() },
+                        onClick = { viewModel.resetTimer() },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
                     ) {
                         Text("Reset", fontSize = 20.sp, color = Color.White)
@@ -188,6 +118,7 @@ fun GymTimerApp(context: Context) {
         }
     }
 }
+
 
 fun formatTime(seconds: Int): String {
     val m = seconds / 60
