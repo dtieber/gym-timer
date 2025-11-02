@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.dti.gymtimer.GymTimerService
 import com.dti.gymtimer.MainActivity
 import com.dti.gymtimer.R
 import com.dti.gymtimer.formatTime
@@ -51,12 +53,18 @@ class NotificationService {
     fun showStopNotification(context: Context) {
         createNotificationChannels(context)
 
-        val notification = Notification.Builder(context, CHANNEL_ID_ACTIVE)
+        val stopAction = NotificationCompat.Action.Builder(
+            0,
+            "Stop",
+            getStopTimerIntent(context)
+        ).build()
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_ACTIVE)
             .setContentTitle("⏰ Gym Timer")
             .setContentText("Alarm ringing – tap to stop")
             .setSmallIcon(R.drawable.ic_notification_timer)
             .setAutoCancel(true)
-            .setContentIntent(getNavigateBackToAppIntent(context))
+            .addAction(stopAction)
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -97,6 +105,18 @@ class NotificationService {
         return PendingIntent.getActivity(
             context,
             0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun getStopTimerIntent(context: Context): PendingIntent {
+        val intent = Intent(context, GymTimerService::class.java).apply {
+            action = GymTimerService.RESET
+        }
+        return PendingIntent.getService(
+            context,
+            1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
