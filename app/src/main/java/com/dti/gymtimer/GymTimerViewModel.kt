@@ -24,6 +24,9 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
     private val _alarmRinging = MutableStateFlow(false)
     val alarmRinging: StateFlow<Boolean> = _alarmRinging
 
+    private val _currentSet = MutableStateFlow<Int?>(null)
+    val currentSet: StateFlow<Int?> = _currentSet
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             Log.d(TAG, "Received broadcast: ${intent?.action}")
@@ -36,6 +39,7 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
 
                 CountdownService.ACTION_COUNTDOWN_COMPLETED -> {
                     _alarmRinging.value = true
+                    advanceSet()
                     Log.d(TAG, "Received completion event")
                 }
 
@@ -95,5 +99,19 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
         }
         context.startService(intent)
         Log.d(TAG, "Reset timer")
+    }
+
+    fun selectSet(set: Int) {
+        val computedSet = if (_currentSet.value == set) null else set
+        _currentSet.value = computedSet
+        Log.d(TAG, "Set set to ${computedSet}")
+    }
+
+    private fun advanceSet() {
+        _currentSet.value?.let {
+            val next = if (it == 5) 1 else it + 1
+            Log.d(TAG, "Advancing set from $it to $next")
+            _currentSet.value = next
+        }
     }
 }

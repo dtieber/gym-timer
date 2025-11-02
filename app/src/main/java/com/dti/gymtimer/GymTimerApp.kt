@@ -31,6 +31,7 @@ import java.util.Locale
 fun GymTimerApp(viewModel: GymTimerViewModel) {
     val remainingTime by viewModel.remainingTime.collectAsState()
     val alarmRinging by viewModel.alarmRinging.collectAsState()
+    val currentSet by viewModel.currentSet.collectAsState()
 
     Surface(
         modifier = Modifier
@@ -61,6 +62,39 @@ fun GymTimerApp(viewModel: GymTimerViewModel) {
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                (1..5).forEach { set ->
+                    val isCurrent = currentSet == set
+                    val isNext = currentSet != null && (currentSet!! % 5 + 1) == set
+
+                    val bgColor = when {
+                        isCurrent -> Color(0xFF4CAF50)
+                        isNext -> Color(0xFF81C784)
+                        else -> Color.DarkGray
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .background(bgColor)
+                            .clickable { viewModel.selectSet(set) }
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$set",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
             }
 
             Text(
