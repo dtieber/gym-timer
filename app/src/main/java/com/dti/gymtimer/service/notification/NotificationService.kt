@@ -65,6 +65,7 @@ class NotificationService {
             .setSmallIcon(R.drawable.ic_notification_timer)
             .setAutoCancel(true)
             .addAction(stopAction)
+            .setContentIntent(getNavigateBackToAppIntent(context))
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
