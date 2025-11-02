@@ -53,6 +53,13 @@ class GymTimerService() : Service() {
         registerCountdownReceiver()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.d(TAG, "Remove foreground service")
+        resetTimer()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     private fun startTimer(initialSeconds: Int) {
         _isRunning = true
         countdownService.startCountdown(this, initialSeconds)
