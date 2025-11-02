@@ -19,6 +19,7 @@ class GymTimerService() : Service() {
         const val PAUSE = "PAUSE"
         const val RESET = "RESET"
         const val ADD_TIME = "ADD_TIME"
+        const val RESET_COMPLETE = "RESET_COMPLETE"
     }
 
     val alarmController = AlarmController()
@@ -121,7 +122,17 @@ class GymTimerService() : Service() {
         countdownService.resetCountdown()
         notificationService.cancelNotification(this)
         alarmController.stop(this)
+        broadcastResetComplete()
         stopForeground(STOP_FOREGROUND_REMOVE)
+    }
+
+    private fun broadcastResetComplete() {
+        val intent = Intent().apply {
+            action = RESET_COMPLETE
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+        Log.d(TAG, "Broadcast sent: RESET_COMPLETE")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

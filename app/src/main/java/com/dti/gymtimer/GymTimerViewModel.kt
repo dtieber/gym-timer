@@ -38,6 +38,12 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
                     _alarmRinging.value = true
                     Log.d(TAG, "Received completion event")
                 }
+
+                GymTimerService.RESET_COMPLETE -> {
+                    _remainingTime.value = 0
+                    _alarmRinging.value = false
+                    Log.d(TAG, "Received reset completed event")
+                }
             }
         }
     }
@@ -46,6 +52,7 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
         val filter = IntentFilter().apply {
             addAction(CountdownService.ACTION_COUNTDOWN_UPDATED)
             addAction(CountdownService.ACTION_COUNTDOWN_COMPLETED)
+            addAction(GymTimerService.RESET_COMPLETE)
         }
         context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         Log.d(TAG, "BroadcastReceiver registered")
@@ -83,8 +90,6 @@ class GymTimerViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun resetTimer() {
-        _remainingTime.value = 0
-        _alarmRinging.value = false
         val intent = Intent(context, GymTimerService::class.java).apply {
             action = GymTimerService.TimerCommands.RESET
         }
